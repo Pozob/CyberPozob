@@ -1,5 +1,3 @@
-import lobbyLink from "./methods/getLobbyLink";
+import bot from "./bot";
 
-lobbyLink.enableLobbyLink();
-lobbyLink.getLobbyLink().then(res => console.log('Lobby Link:', res));
-console.log("Running");
+bot.startUp();
