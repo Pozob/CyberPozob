@@ -1,10 +1,8 @@
-import pup from "puppeteer";
-import cheerio from "cheerio";
+import http from "../../services/httpService";
 import rebrandly from "../../services/rebrandly";
 
 const steamID = process.env.STEAM_ID;
-const steamUrl = "https://steamcommunity.com/id/";
-const noLobbyString = "steam://";
+const steamApiUrl = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/";
 const shortLinkTitle = "Join Game Link";
 let lobbyLinkActive = false;
 
@@ -15,8 +13,15 @@ let lobbyLinkActive = false;
 const getLobbyLink = async () => {
     if (!lobbyLinkActive) return false;
     try {
-        const lobby = await fetchLobbyLink();
-        if (!lobby.link) return lobby.text;
+        let { data } = await fetchLobbyLink();
+        data = data.response.players.pop();
+        const { gameid, lobbysteamid: lobbyid } = data;
+
+        const noGameText = "Es gibt gerade keine Lobby zum beitreten";
+
+        if (gameid === undefined || lobbyid === undefined) return noGameText;
+
+        const steamLink = `steam://joinlobby/${gameid}/${lobbyid}/${steamID}`;
 
         //Check existing Links
         const { data: links } = await rebrandly.getLinks();
@@ -27,50 +32,27 @@ const getLobbyLink = async () => {
 
         let url = "";
         if (!linkExists) {
-            const { data } = await rebrandly.shortenLink(lobby.link, shortLinkTitle);
+            const { data } = await rebrandly.shortenLink(steamLink, shortLinkTitle);
             url = data.shortUrl;
         } else {
-            const { data } = await rebrandly.updateLink(gameLink.id, lobby.link, shortLinkTitle);
+            const { data } = await rebrandly.updateLink(gameLink.id, steamLink, shortLinkTitle);
             url = data.shortUrl;
         }
 
-        return `http://${url}`;
+        return `https://${url}`;
     } catch (err) {
         console.error(err);
+        return -1;
     }
 }
 
-//Get the actual link
 const fetchLobbyLink = () => {
-    return pup.launch()
-        .then(browser => browser.newPage())
-        .then(page => page.goto(`${steamUrl}${steamID}`)
-            .then(() => page.content()))
-        .then(html => {
-            const $ = cheerio.load(html);
-            const game = $('div.profile_in_game_joingame');
-
-            const returnObj = { link: false };
-
-            if (!game.length) {
-                returnObj.text = "Es gibt gerade kein Spiel zum beitreten";
-                return returnObj;
-            }
-
-            const lobbylink = game.find('a').attr('href');
-            if (lobbylink === noLobbyString) {
-                returnObj.text = "Es gibt gerade keine Lobby zum beitreten";
-                return returnObj;
-            }
-
-            returnObj.link = lobbylink;
-            return returnObj;
-        })
-        .catch(error => {
-            console.error('Error :', error);
-
-            return 'Error while fetching Lobby Link!';
-        });
+    return http.get(steamApiUrl, {
+        params: {
+            key: process.env.STEAM_API_KEY,
+            steamids: steamID
+        }
+    })
 }
 
 const enableLobbyLink = () => {
