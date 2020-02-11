@@ -14,7 +14,7 @@ class Bot {
             username: "CyberPozob",
             password: process.env.TWITCH_OAUTH
         },
-        channels: ['pozob']
+        channels: ['superval4', 'pozob', 'cyberpozob']
     });
 
     startUp = async () => {

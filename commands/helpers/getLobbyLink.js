@@ -1,10 +1,10 @@
 import http from "../../services/httpService";
 import rebrandly from "../../services/rebrandly";
 
-const steamID = process.env.STEAM_ID;
+const steamID = process.env.STEAM_ID; //TODO: Take that to a DB to make it indipentend from a Channel
 const steamApiUrl = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/";
 const shortLinkTitle = "Join Game Link";
-let lobbyLinkActive = false;
+let lobbyLinkActive = false; //TODO: Take that to a DB to make it indipentend from a Channel
 
 /**  
  * If we should be able to get the Lobby Link, get it.
