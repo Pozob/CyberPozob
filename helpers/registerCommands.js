@@ -1,7 +1,7 @@
 import LobbyLink from "../commands/lobbylink";
 
-export default function registerCommands(say) {
+export default function registerCommands(channel, say) {
     return [
-        new LobbyLink(say)
+        new LobbyLink(channel, say)
     ];
 }
