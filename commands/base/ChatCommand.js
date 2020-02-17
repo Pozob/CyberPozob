@@ -13,7 +13,6 @@ class ChatCommand {
         let push = false;
         if (!command) {
             command = this.defaultCommand;
-            console.log("Updating!");
             push = true;
         }
         this.config = command.config;
@@ -49,7 +48,7 @@ class ChatCommand {
     };
 
     command = async (channel, tags, message) => {
-        if (!this.matches(message)) return;
+        if (!this.matches(message.toLowerCase())) return;
         this.setParams(message);
 
         //Handle Command... Do what must be done

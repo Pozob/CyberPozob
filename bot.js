@@ -1,21 +1,24 @@
 import tmi from "tmi.js";
-import registerCommands from "./helpers/registerCommands";
+import { registerCommands } from "./helpers/registerCommands";
 import DB from "./services/database";
 
 class Bot {
     commands = [];
     keySign = process.env.BOT_KEY_SIGN;
+    chatChannels = [];
 
 
     startUp = async () => {
-        const channels = await DB.getChannels();
-        this.channels = channels.map(channel => channel._id);
-        console.log(this.channels);
-        this.createBot(this.channels);
-        await this.client.connect();
+        this.channels = await DB.getChannels();
+        this.createBot(this.channels.map(channel => channel._id));
+        try {
+            await this.client.connect();
+        } catch (err) {
+            console.error('Could not Connect', err);
+        }
         this.setupChatListener();
         this.setUpCommands();
-        // this.entryMessage();
+        this.setupWhisperListener();
     };
 
     createBot = (channels) => {
@@ -29,46 +32,66 @@ class Bot {
                 username: "CyberPozob",
                 password: process.env.TWITCH_OAUTH
             },
-            // channels: ['superval4', 'pozob', 'cyberpozob']
             channels
         });
     }
 
-    entryMessage = () => {
-        this.client.say('#pozob', "HeyHo");
-    }
+    setupWhisperListener = () => {
+        this.client.on('whisper', (user, tags, message) => {
+            if (message.toLowerCase() === "join") {
+                this.client.join(user)
+                    .then(() => DB.createChannel(user))
+                    .then((channel) => {
+                        channel.chatCommands = this.addCommandsToChannelAfterWhisper(user)
+                        this.channels = [...this.channels, channel];
+                        this.client.whisper(user, `Joined ${user}`)
+                    });
+            }
+        });
+    };
 
     setupChatListener = () => {
         this.client.on('message', (channel, tags, message, self) => {
             // Dont reply to ourself
             if (self) return;
+            //Let the WhisperHandler handle whispers
+            if (tags["message-type"] === "whisper") return;
 
             console.log('Channel:', channel);
             console.log('Tags:', tags);
             console.log("Message:", message);
 
-            //Check if the message starts with our Key Sign
-            if (!message.startsWith(this.keySign)) return;
+            const chatChannel = this.channels.find(chatChannel => chatChannel._id === channel);
+
+            if (!message.startsWith(chatChannel.keySign)) return;
 
             //Strip the Key Sign
             const botMessage = message.substring(1);
 
+            const commands = chatChannel.chatCommands;
+
+            console.log(commands);
+
             //Check the commands
-            this.commands.forEach(command => {
+            commands.forEach(command => {
                 command.command(channel, tags, botMessage)
                     .then(response => this.client.say(channel, response));
             });
         });
     }
 
+    addCommandsToChannelAfterWhisper = (channel) => {
+        return registerCommands(channel, this.client.say);
+    }
+
     setUpCommands = () => {
         this.channels.forEach(channel => {
-            this.setCommands(registerCommands(channel, this.client.say));
+            channel.chatCommands = registerCommands(channel, this.client.say);
         });
     }
 
-    setCommands = (commands) => {
-        this.commands = commands;
+    addCommands = (commands) => {
+        this.commands = [...this.commands, commands];
     };
 }
 

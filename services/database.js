@@ -22,6 +22,10 @@ const getCommands = (channelname) => {
 
 const getCommand = async (channelname, commandName) => {
     const channel = await getChannel(channelname);
+    if (channel === null) {
+        console.warn(`Tried to find Channel ${channelname}, but didnt found it...`);
+        return;
+    }
     return channel.commands.find(command => command.name === commandName);
 }
 
@@ -32,13 +36,15 @@ const setCommands = async (channelname, commands) => {
 }
 
 const updateCommand = async (channelname, newCommand) => {
-    // DBchannel.save();
     let newCommands = [];
 
     const channel = await getChannel(channelname);
+    if (!channel) {
+        return;
+    }
     delete channel._id;
     const commands = channel.commands;
-    console.log("Commands:", commands);
+    // console.log("Commands:", commands);
 
     const oldCommand = commands.find(command => command.name === newCommand.name);
     //Insert
@@ -49,7 +55,7 @@ const updateCommand = async (channelname, newCommand) => {
         newCommands[commands.indexOf(oldCommand)] = newCommand;
     }
 
-    console.log('New Commands:', newCommands);
+    // console.log('New Commands:', newCommands);
     channel.commands = [...newCommands];
     channel.save();
 }
