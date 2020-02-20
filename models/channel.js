@@ -8,6 +8,10 @@ const channelSchema = new mongoose.Schema({
         type: String,
         default: "!"
     },
+    steamId: {
+        type: String,
+        default: ''
+    },
     commands: [{
         name: String,
         roles: [String],

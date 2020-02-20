@@ -32,10 +32,12 @@ class Bot {
                 username: "CyberPozob",
                 password: process.env.TWITCH_OAUTH
             },
+            // channels: ['#cyberpozob', ...channels]
             channels
         });
     }
 
+    //Make this pretty later
     setupWhisperListener = () => {
         this.client.on('whisper', (user, tags, message) => {
             if (message.toLowerCase() === "join") {
@@ -44,11 +46,21 @@ class Bot {
                     .then((channel) => {
                         channel.chatCommands = this.addCommandsToChannelAfterWhisper(user)
                         this.channels = [...this.channels, channel];
-                        this.client.whisper(user, `Joined ${user}`)
+                        this.client.whisper(user.substr(1), `Joined ${user}`);
                     });
+            } else if (message.toLowerCase().startsWith("steamid")) {
+                const steamid = message.split(' ')[1];
+                const channel = this.findChannel(user);
+                channel.steamId = steamid;
+                DB.updateChannel(channel);
+                this.channels = [...this.channels, channel];
             }
         });
     };
+
+    findChannel = (channel) => {
+        return this.channels.find(chatChannel => chatChannel._id === channel);
+    }
 
     setupChatListener = () => {
         this.client.on('message', (channel, tags, message, self) => {
@@ -61,7 +73,7 @@ class Bot {
             console.log('Tags:', tags);
             console.log("Message:", message);
 
-            const chatChannel = this.channels.find(chatChannel => chatChannel._id === channel);
+            const chatChannel = this.findChannel(channel);
 
             if (!message.startsWith(chatChannel.keySign)) return;
 
@@ -70,11 +82,13 @@ class Bot {
 
             const commands = chatChannel.chatCommands;
 
-            console.log(commands);
+            console.log(chatChannel);
+
+            const data = { steamId: chatChannel.steamId };
 
             //Check the commands
             commands.forEach(command => {
-                command.command(channel, tags, botMessage)
+                command.command(channel, tags, botMessage, data)
                     .then(response => this.client.say(channel, response));
             });
         });

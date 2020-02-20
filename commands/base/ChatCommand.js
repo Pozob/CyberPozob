@@ -47,13 +47,13 @@ class ChatCommand {
         this.params = message.substring(this.trigger.length).split(' ').filter(param => param !== '');
     };
 
-    command = async (channel, tags, message) => {
+    command = async (channel, tags, message, data) => {
         if (!this.matches(message.toLowerCase())) return;
         this.setParams(message);
 
         //Handle Command... Do what must be done
         try {
-            return await this.handleCommand(channel, tags);
+            return await this.handleCommand(data);
         } catch (err) {
             console.log('Error happend:', err);
             return 'Ein Fehler ist passiert. @Pozob hats verhauen';

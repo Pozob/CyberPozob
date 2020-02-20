@@ -15,6 +15,15 @@ const createChannel = (channelname) => {
     return channel.save();
 }
 
+const updateChannel = async (channel) => {
+    const id = channel._id;
+    delete channel._id;
+    // const oldChannel = getChannel(id);
+    // const newChannel = { ...oldChannel, ...channel };
+    // return newChannel.save();
+    return Channel.findByIdAndUpdate(id, channel);
+}
+
 const getCommands = (channelname) => {
     return getChannel(channelname)
         .select("commands");
@@ -70,6 +79,7 @@ export default {
     getChannels,
     getChannel,
     createChannel,
+    updateChannel,
     getCommands,
     getCommand,
     updateCommand,

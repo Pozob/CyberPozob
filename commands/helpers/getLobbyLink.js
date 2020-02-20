@@ -1,18 +1,18 @@
 import http from "../../services/httpService";
 import rebrandly from "../../services/rebrandly";
 
-const steamID = process.env.STEAM_ID; //TODO: Take that to a DB to make it indipentend from a Channel
 const steamApiUrl = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/";
-const shortLinkTitle = "Join Game Link";
 
 /**  
  * If we should be able to get the Lobby Link, get it.
  * Otherwise just return false
  */
-const getLobbyLink = async (config) => {
+const getLobbyLink = async (config, options) => {
     if (!config.on) return false;
+    if (!options.steamId) return "Dude, ich weiß nicht wer du bist. Aber whisper mich mit deiner SteamId an ;)";
     try {
-        let { data } = await fetchLobbyLink();
+        const { steamId } = options;
+        let { data } = await fetchLobbyLink(steamId);
         data = data.response.players.pop();
         const { gameid, lobbysteamid: lobbyid } = data;
 
@@ -20,21 +20,21 @@ const getLobbyLink = async (config) => {
 
         if (gameid === undefined || lobbyid === undefined) return noGameText;
 
-        const steamLink = `steam://joinlobby/${gameid}/${lobbyid}/${steamID}`;
+        const steamLink = `steam://joinlobby/${gameid}/${lobbyid}/${config.steamId}`;
 
         //Check existing Links
         const { data: links } = await rebrandly.getLinks();
 
         //Check if link already exists
-        const gameLink = links.filter(link => link.title === shortLinkTitle).pop();
+        const gameLink = links.filter(link => link.title === steamId).pop();
         const linkExists = gameLink !== undefined;
 
         let url = "";
         if (!linkExists) {
-            const { data } = await rebrandly.shortenLink(steamLink, shortLinkTitle);
+            const { data } = await rebrandly.shortenLink(steamLink, steamId);
             url = data.shortUrl;
         } else {
-            const { data } = await rebrandly.updateLink(gameLink.id, steamLink, shortLinkTitle);
+            const { data } = await rebrandly.updateLink(gameLink.id, steamLink, steamId);
             url = data.shortUrl;
         }
 
@@ -45,11 +45,11 @@ const getLobbyLink = async (config) => {
     }
 }
 
-const fetchLobbyLink = () => {
+const fetchLobbyLink = (steamId) => {
     return http.get(steamApiUrl, {
         params: {
             key: process.env.STEAM_API_KEY,
-            steamids: steamID
+            steamids: steamId
         }
     })
 }

@@ -15,10 +15,9 @@ export default class LobbyLink extends ChatCommand {
         }
     }
 
-    handleCommand = async (channel, tags) => {
-        console.log("Params:", this.params);
+    handleCommand = async (data) => {
         if (!this.params.length) {
-            const lobbylink = await lobby.getLobbyLink(this.config);
+            const lobbylink = await lobby.getLobbyLink(this.config, data);
             if (lobbylink === -1) return "Da hat was nicht geklappt. @Pozob sollte sich das mal ansehen"
             if (!lobbylink) return "LobbyLink ist gerade ausgeschaltet";
             return lobbylink;
