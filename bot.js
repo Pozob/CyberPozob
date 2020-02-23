@@ -32,7 +32,6 @@ class Bot {
                 username: "CyberPozob",
                 password: process.env.TWITCH_OAUTH
             },
-            // channels: ['#cyberpozob', ...channels]
             channels
         });
     }

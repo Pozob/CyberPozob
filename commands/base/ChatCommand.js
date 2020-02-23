@@ -1,15 +1,18 @@
 import DB from "../../services/database";
 
 class ChatCommand {
-    constructor(channel, trigger, sayFunction) {
-        this.trigger = trigger;
-        this.say = sayFunction;
+    params = [];
+    config = {};
+
+    constructor(channel, name) {
+        this.name = name;
+        // this.say = sayFunction;
         this.channel = channel;
-        this.getConfig();
+        this.getDBConfig();
     };
 
-    getConfig = async () => {
-        let command = await DB.getCommand(this.channel, this.trigger);
+    getDBConfig = async () => {
+        let command = await DB.getCommand(this.channel, this.name);
         let push = false;
         if (!command) {
             command = this.defaultCommand;
@@ -21,31 +24,26 @@ class ChatCommand {
         if (push) this.updateCommand(this.channel);
     }
 
-    params = [];
-    config = {};
-
-    updateCommand = (channel) => {
-        const newCommand = {
-            name: this.trigger,
-            reply: this.reply,
-            roles: this.roles,
-            config: this.config
-        };
-        DB.updateCommand(channel, newCommand);
+    updateCommand = () => {
+        DB.updateCommand(this.channel._id, this);
     }
 
     updateConfig = (newConfig) => {
         this.config = newConfig;
-        this.updateCommand(this.channel);
+        this.updateCommand();
     }
 
     matches = (message) => {
-        return message.startsWith(this.trigger);
+        return message.startsWith(this.name);
     };
 
     setParams = (message) => {
-        this.params = message.substring(this.trigger.length).split(' ').filter(param => param !== '');
+        this.params = message.substring(this.name.length).split(' ').filter(param => param !== '');
     };
+
+    getConfig = () => {
+        return this.config;
+    }
 
     command = async (channel, tags, message, data) => {
         if (!this.matches(message.toLowerCase())) return;

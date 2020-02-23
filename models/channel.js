@@ -11,13 +11,7 @@ const channelSchema = new mongoose.Schema({
     steamId: {
         type: String,
         default: ''
-    },
-    commands: [{
-        name: String,
-        roles: [String],
-        reply: [String],
-        config: {}
-    }]
+    }
 });
 
 export default mongoose.model('channels', channelSchema);

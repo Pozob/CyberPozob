@@ -2,14 +2,14 @@ import ChatCommand from "./base/ChatCommand";
 import lobby from "./helpers/getLobbyLink";
 
 export default class LobbyLink extends ChatCommand {
-    constructor(channel, say) {
-        super(channel, 'lobbylink', say);
+    constructor(channel) {
+        super(channel, 'lobbylink');
     };
 
     defaultCommand = {
         name: "lobbylink",
         roles: [],
-        reply: null,
+        reply: [],
         config: {
             on: false
         }
