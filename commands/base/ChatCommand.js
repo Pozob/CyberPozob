@@ -45,13 +45,13 @@ class ChatCommand {
         return this.config;
     }
 
-    command = async (channel, tags, message, data) => {
+    command = async (channel, user, message, options) => {
         if (!this.matches(message.toLowerCase())) return;
         this.setParams(message);
 
         //Handle Command... Do what must be done
         try {
-            return await this.handleCommand(data);
+            return await this.handleCommand(options, user);
         } catch (err) {
             console.log('Error happend:', err);
             return 'Ein Fehler ist passiert. @Pozob hats verhauen';

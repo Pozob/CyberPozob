@@ -1,5 +1,6 @@
 import ChatCommand from "./base/ChatCommand";
 import lobby from "./helpers/getLobbyLink";
+import chatHelper from "../helpers/chatHelper";
 
 export default class LobbyLink extends ChatCommand {
     constructor(channel) {
@@ -15,14 +16,17 @@ export default class LobbyLink extends ChatCommand {
         }
     }
 
-    handleCommand = async (data) => {
+    handleCommand = async (options, user) => {
         if (!this.params.length) {
-            const lobbylink = await lobby.getLobbyLink(this.config, data);
+            const lobbylink = await lobby.getLobbyLink(this.config, options);
             if (lobbylink === -1) return "Da hat was nicht geklappt. @Pozob sollte sich das mal ansehen"
             if (!lobbylink) return "LobbyLink ist gerade ausgeschaltet";
             return lobbylink;
         } else {
             const order = this.params.pop();
+            if (!chatHelper.isMod(user) && (order === "on" || order === "off")) {
+                return "Du böser Bube Kappa Dafür musst du Mod sein."
+            }
             if (order === "on") {
                 const newConfig = { ...this.config, on: true };
                 this.updateConfig(newConfig);

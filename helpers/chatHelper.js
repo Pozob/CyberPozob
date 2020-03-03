@@ -1,15 +1,14 @@
-const isMod = (tags, exclusive = false) => {
-    if (exclusive) return tags.mod;
-    return isBroadcaster || tags.mod;
-
+const isMod = (user, exclusive = false) => {
+    if (exclusive) return user.mod;
+    return user.mod || isBroadcaster();
 }
 
-const isBroadcaster = (tags) => {
-    return tags.badges.broadcaster;
+const isBroadcaster = (user) => {
+    return user.badges.broadcaster;
 }
 
-const isSub = (tags) => {
-    return tags.subscriber;
+const isSub = (user) => {
+    return user.subscriber;
 }
 
 export default {
