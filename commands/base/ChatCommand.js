@@ -1,4 +1,4 @@
-import DB from "../../services/database";
+import DB from '../../services/database';
 
 class ChatCommand {
     params = [];
@@ -9,7 +9,7 @@ class ChatCommand {
         // this.say = sayFunction;
         this.channel = channel;
         this.getDBConfig();
-    };
+    }
 
     getDBConfig = async () => {
         let command = await DB.getCommand(this.channel, this.name);
@@ -22,28 +22,31 @@ class ChatCommand {
         this.reply = command.reply;
         this.roles = command.roles;
         if (push) this.updateCommand(this.channel);
-    }
+    };
 
     updateCommand = () => {
         DB.updateCommand(this.channel._id, this);
-    }
+    };
 
-    updateConfig = (newConfig) => {
+    updateConfig = newConfig => {
         this.config = newConfig;
         this.updateCommand();
-    }
+    };
 
-    matches = (message) => {
+    matches = message => {
         return message.startsWith(this.name);
     };
 
-    setParams = (message) => {
-        this.params = message.substring(this.name.length).split(' ').filter(param => param !== '');
+    setParams = message => {
+        this.params = message
+            .substring(this.name.length)
+            .split(' ')
+            .filter(param => param !== '');
     };
 
     getConfig = () => {
         return this.config;
-    }
+    };
 
     command = async (channel, user, message, options) => {
         if (!this.matches(message.toLowerCase())) return;
@@ -53,7 +56,7 @@ class ChatCommand {
         try {
             return await this.handleCommand(options, user);
         } catch (err) {
-            console.log('Error happend:', err);
+            console.error('Error happend:', err);
             return 'Ein Fehler ist passiert. @Pozob hats verhauen';
         }
     };
