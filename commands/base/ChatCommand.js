@@ -6,7 +6,6 @@ class ChatCommand {
 
     constructor(channel, name) {
         this.name = name;
-        // this.say = sayFunction;
         this.channel = channel;
         this.getDBConfig();
     }
@@ -21,34 +20,51 @@ class ChatCommand {
         this.config = command.config;
         this.reply = command.reply;
         this.roles = command.roles;
-        if (push) this.updateCommand(this.channel);
+        this.alias = command.alias;
+        if (push) this.updateCommand();
     };
 
     updateCommand = () => {
         DB.updateCommand(this.channel._id, this);
     };
 
-    updateConfig = newConfig => {
+    /**
+     * Update the lokal and DB Config
+     */
+    updateConfig = (newConfig) => {
         this.config = newConfig;
         this.updateCommand();
     };
 
-    matches = message => {
-        return message.startsWith(this.name);
+    /**
+     * Checks if the message matches with the command name oder an alias
+     */
+    matches = (message) => {
+        return (
+            message.startsWith(this.name) || this.alias.some((alias) => message.startsWith(alias))
+        );
     };
 
-    setParams = message => {
-        this.params = message
-            .substring(this.name.length)
-            .split(' ')
-            .filter(param => param !== '');
+    /**
+     * Removes the word, that triggered the command and sets all other words as parameters
+     */
+    setParams = (message) => {
+        const tempParam = message.split(' ').slice(1);
+        this.params = tempParam.filter((param) => param !== '');
     };
 
+    /**
+     * Returns the config of the command
+     */
     getConfig = () => {
         return this.config;
     };
 
-    command = async (channel, user, message, options) => {
+    /**
+     * Command execution
+     * @returns Text to display
+     */
+    command = async (user, message, options) => {
         if (!this.matches(message.toLowerCase())) return;
         this.setParams(message);
 

@@ -8,17 +8,29 @@ class Bot {
     chatChannels = [];
 
     startUp = async () => {
+        //Get all Channels to join
         this.channels = await DB.getChannels();
-        this.createBot(this.channels.map(channel => channel._id));
+        //Setup the bot Config
+        this.createBot(this.channels.map((channel) => channel._id));
+        //Setup Listeners, that are used
         this.setupConnetionListener();
+        this.setupChannelJoinListener();
+        //Try to connect
         try {
             await this.client.connect();
         } catch (err) {
             console.error('Could not Connect', err);
         }
+        //Setup the other Listeners
         this.setupChatListener();
         this.setUpCommands();
         this.setupWhisperListener();
+    };
+
+    setupChannelJoinListener = () => {
+        this.client.on('join', (channel) => {
+            console.log(`Joined Channel ${channel}`);
+        });
     };
 
     setupConnetionListener = () => {
@@ -27,18 +39,18 @@ class Bot {
         });
     };
 
-    createBot = channels => {
+    createBot = (channels) => {
         this.client = new tmi.Client({
             options: { debug: false },
             connection: {
                 reconnect: true,
-                secure: true
+                secure: true,
             },
             identity: {
-                username: 'CyberPozob',
-                password: process.env.TWITCH_OAUTH
+                username: process.env.BOT_USERNAME,
+                password: process.env.TWITCH_OAUTH,
             },
-            channels
+            channels,
         });
     };
 
@@ -49,7 +61,7 @@ class Bot {
                 this.client
                     .join(user)
                     .then(() => DB.createChannel(user))
-                    .then(channel => {
+                    .then((channel) => {
                         channel.chatCommands = this.addCommandsToChannelAfterWhisper(user);
                         this.channels = [...this.channels, channel];
                         this.client.whisper(user.substr(1), `Joined ${user}`);
@@ -60,12 +72,18 @@ class Bot {
                 channel.steamId = steamid;
                 DB.updateChannel(channel);
                 this.channels = [...this.channels, channel];
+            } else if (message.toLowerCase().startsWith('keysign')) {
+                const keySign = message.substring('keysign '.length);
+                const channel = this.findChannel(user);
+                channel.keySign = keySign;
+                DB.updateChannel(channel);
+                this.channels = [...this.channels, channel];
             }
         });
     };
 
-    findChannel = channel => {
-        return this.channels.find(chatChannel => chatChannel._id === channel);
+    findChannel = (channel) => {
+        return this.channels.find((chatChannel) => chatChannel._id === channel);
     };
 
     setupChatListener = () => {
@@ -80,32 +98,32 @@ class Bot {
             if (!message.startsWith(chatChannel.keySign)) return;
 
             //Strip the Key Sign
-            const botMessage = message.substring(1);
+            const botMessage = message.substring(chatChannel.keySign.length);
 
             const commands = chatChannel.chatCommands;
 
             const data = { steamId: chatChannel.steamId };
 
             //Check the commands
-            commands.forEach(command => {
+            commands.forEach((command) => {
                 command
-                    .command(channel, tags, botMessage, data)
-                    .then(response => this.client.say(channel, response));
+                    .command(tags, botMessage, data)
+                    .then((response) => this.client.say(channel, response));
             });
         });
     };
 
-    addCommandsToChannelAfterWhisper = channel => {
+    addCommandsToChannelAfterWhisper = (channel) => {
         return registerCommands(channel, this.client.say);
     };
 
     setUpCommands = () => {
-        this.channels.forEach(channel => {
+        this.channels.forEach((channel) => {
             channel.chatCommands = registerCommands(channel, this.client.say);
         });
     };
 
-    addCommands = commands => {
+    addCommands = (commands) => {
         this.commands = [...this.commands, commands];
     };
 }
@@ -115,5 +133,5 @@ const startUp = () => {
 };
 
 export default {
-    startUp
+    startUp,
 };

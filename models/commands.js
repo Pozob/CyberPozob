@@ -1,17 +1,18 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const commandsSchema = new mongoose.Schema({
     channel: {
         type: String,
-        required: true
+        required: true,
     },
     name: {
         type: String,
-        required: true
+        required: true,
     },
+    alias: [String],
     roles: [String],
     reply: [String],
-    config: {}
+    config: {},
 });
 
 export default mongoose.model('command', commandsSchema);
