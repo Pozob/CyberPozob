@@ -4,12 +4,19 @@ class ChatCommand {
     params = [];
     config = {};
 
+    /**
+     * @param {*} channel
+     * @param {String} name
+     */
     constructor(channel, name) {
         this.name = name;
         this.channel = channel;
         this.getDBConfig();
     }
 
+    /**
+     * Gets the Command Config from the Database
+     */
     getDBConfig = async () => {
         let command = await DB.getCommand(this.channel, this.name);
         let push = false;
@@ -24,6 +31,9 @@ class ChatCommand {
         if (push) this.updateCommand();
     };
 
+    /**
+     * Update the Command in the Database
+     */
     updateCommand = () => {
         DB.updateCommand(this.channel._id, this);
     };
