@@ -6,7 +6,6 @@ import Command from '../models/commands';
  */
 const getChannels = async () => {
     const channels = await Channel.find().select('-__v');
-    if (!includeCommands) return channels;
     return channels;
 };
 
