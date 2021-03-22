@@ -63,6 +63,7 @@ class Bot {
      * Sets the settings for the Bot
      */
     createBot = (channels) => {
+        console.log(channels);
         this.client = new tmi.Client({
             options: { debug: false },
             connection: {
@@ -91,19 +92,38 @@ class Bot {
                     .then((channel) => {
                         channel.chatCommands = this.addCommandsToChannelAfterWhisper(user);
                         this.channels = [...this.channels, channel];
-                        this.client.whisper(user.substr(1), `Joined ${user}`);
-                    });
+
+                        //Whisper doesn´t work for now. Instead send a message to the Users channel.
+                        //this.client.whisper(user.substr(1), `Joined ${user}`);
+
+                        //TODO: Implement Message for the Users Channel
+                    })
+                    .catch((error) => console.error(error));
             } else if (message.toLowerCase().startsWith('steamid')) {
+                //Get the Steam Id
                 const steamid = message.split(' ')[1];
+
+                //Find the Channel for the user
                 const channel = this.findChannel(user);
+
+                //Update the steamid on the Channel Entry
                 channel.steamId = steamid;
                 DB.updateChannel(channel);
+
+                //Save the updated Channel in memory
                 this.channels = [...this.channels, channel];
             } else if (message.toLowerCase().startsWith('keysign')) {
+                //Get the new keysign. We dont split here, because this enables us to use multi word keysigns... if someone wants to use it like that
                 const keySign = message.substring('keysign '.length);
+
+                //Find the channel
                 const channel = this.findChannel(user);
+
+                //Update the Channel and save
                 channel.keySign = keySign;
                 DB.updateChannel(channel);
+
+                //Save the updated channel in memory
                 this.channels = [...this.channels, channel];
             }
         });
@@ -123,6 +143,7 @@ class Bot {
         this.client.on('message', (channel, tags, message, self) => {
             // Dont reply to ourself
             if (self) return;
+
             //Let the WhisperHandler handle whispers
             if (tags['message-type'] === 'whisper') return;
 
@@ -131,7 +152,7 @@ class Bot {
             if (!message.startsWith(chatChannel.keySign)) return;
 
             //Strip the Key Sign
-            const botMessage = message.substring(chatChannel.keySign.length);
+            const userMassage = message.substring(chatChannel.keySign.length);
 
             const commands = chatChannel.chatCommands;
 
@@ -140,7 +161,7 @@ class Bot {
             //Check the commands
             commands.forEach((command) => {
                 command
-                    .command(tags, botMessage, data) //The Command checks itself if the message is for it. If it is, it returns a String that can be posted to the chat
+                    .command(tags, userMassage, data) //The Command checks itself if the message is for it. If it is, it returns a String that can be posted to the chat
                     .then((response) => this.client.say(channel, response));
             });
         });

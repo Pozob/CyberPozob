@@ -1,35 +1,45 @@
-import http from "../../services/httpService";
-import rebrandly from "../../services/rebrandly";
+import http from '../../services/httpService';
+import rebrandly from '../../services/rebrandly';
 
-const steamApiUrl = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/";
+const steamApiUrl = 'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/';
 
-/**  
+/**
  * If we should be able to get the Lobby Link, get it.
  * Otherwise just return false
  */
 const getLobbyLink = async (config, options) => {
     if (!config.on) return false;
-    if (!options.steamId) return "Dude, ich weiß nicht wer du bist. Aber whisper mich mit deiner SteamId an TehePelo. Mit /w CyberPozob steamid STEAMID64. Und nicht vergessen dich frei zu machen... Also dein Profil öffentlich natürlich Kappa Und online stellen!";
+    if (!options.steamId)
+        return 'Dude, ich weiß nicht wer du bist. Aber whisper mich mit deiner SteamId64 an TehePelo. Mit /w CyberPozob steamid STEAMID64. Und nicht vergessen dich frei zu machen... Also dein Profil öffentlich natürlich Kappa Und online stellen!';
+
     try {
+        //Get the steam id
         const { steamId } = options;
-        let { data } = await fetchLobbyLink(steamId);
+
+        //Get the Steam Profile of the user
+        let { data } = await fetchSteamPlayers(steamId);
         data = data.response.players.pop();
-        const { gameid, lobbysteamid: lobbyid } = data;
 
-        const noGameText = "Es gibt gerade keine Lobby zum beitreten";
+        //Extract the gameId and the lobbyId
+        const { gameid: gameId, lobbysteamid: lobbyId } = data;
 
-        if (gameid === undefined || lobbyid === undefined) return noGameText;
+        //Default text, if no game exists
+        const noGameText = 'Es gibt gerade keine Lobby zum beitreten';
 
-        const steamLink = `steam://joinlobby/${gameid}/${lobbyid}/${config.steamId}`;
+        //Abort early, if we have no Game or Lobby
+        if (gameId === undefined || lobbyId === undefined) return noGameText;
+
+        const steamLink = `steam://joinlobby/${gameId}/${lobbyId}/${config.steamId}`;
 
         //Check existing Links
         const { data: links } = await rebrandly.getLinks();
 
         //Check if link already exists
-        const gameLink = links.filter(link => link.title === steamId).pop();
+        const gameLink = links.filter((link) => link.title === steamId).pop();
         const linkExists = gameLink !== undefined;
 
-        let url = "";
+        //Create or update a shortend link
+        let url = '';
         if (!linkExists) {
             const { data } = await rebrandly.shortenLink(steamLink, steamId);
             url = data.shortUrl;
@@ -43,17 +53,22 @@ const getLobbyLink = async (config, options) => {
         console.error(err);
         return -1;
     }
-}
+};
 
-const fetchLobbyLink = (steamId) => {
+/**
+ * Calls the Steam API and returns things about the users
+ * @param {String} steamId
+ * @returns
+ */
+const fetchSteamPlayers = (steamId) => {
     return http.get(steamApiUrl, {
         params: {
             key: process.env.STEAM_API_KEY,
-            steamids: steamId
-        }
-    })
-}
+            steamids: steamId,
+        },
+    });
+};
 
 export default {
-    getLobbyLink
-}
+    getLobbyLink,
+};

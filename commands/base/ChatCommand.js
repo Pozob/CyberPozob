@@ -3,9 +3,43 @@ import DB from '../../services/database';
 class ChatCommand {
     params = [];
     config = {};
+    roles = [];
+    alias = [];
+    reply = {
+        noPermission: {
+            user: null,
+            mod: null,
+        },
+    };
 
     /**
-     * @param {*} channel
+     * The default Command Options, that every command should implement.
+     * Is only used on creation and gets saved into the config.
+     */
+    defaultCommand = {
+        //The name of the command. The command also can be called with this name
+        name: null,
+
+        //The roles, that may call this command. Empty, Sub, Mod or Brodcaster. User < Mod < Brodcaster
+        roles: [],
+
+        //Default Replies, of the command doesn´t handles it itself
+        reply: {
+            noPermission: {
+                user: null,
+                mod: null,
+            },
+        },
+
+        //Under these aliases the command can also be called
+        alias: [],
+
+        //Config, if the command needs any, like turning it on or off, or a counter
+        config: {},
+    };
+
+    /**
+     * @param {String} channel
      * @param {String} name
      */
     constructor(channel, name) {
@@ -20,10 +54,13 @@ class ChatCommand {
     getDBConfig = async () => {
         let command = await DB.getCommand(this.channel, this.name);
         let push = false;
+
+        //If the command is false, we update/save a new command
         if (!command) {
             command = this.defaultCommand;
             push = true;
         }
+
         this.config = command.config;
         this.reply = command.reply;
         this.roles = command.roles;
@@ -50,9 +87,7 @@ class ChatCommand {
      * Checks if the message matches with the command name oder an alias
      */
     matches = (message) => {
-        return (
-            message.startsWith(this.name) || this.alias.some((alias) => message.startsWith(alias))
-        );
+        return message.startsWith(this.name) || this.alias.some((alias) => message.startsWith(alias));
     };
 
     /**
@@ -72,6 +107,11 @@ class ChatCommand {
 
     /**
      * Command execution
+     *
+     * @param {String} user User that sent the message
+     * @param {String} message The message containing everything, exept the key sign
+     * @param {Object} options
+     *
      * @returns Text to display
      */
     command = async (user, message, options) => {
@@ -80,7 +120,7 @@ class ChatCommand {
 
         //Handle Command... Do what must be done
         try {
-            return await this.handleCommand(options, user);
+            return await this.handleCommand(user, options);
         } catch (err) {
             console.error('Error happend:', err);
             return 'Ein Fehler ist passiert. @Pozob hats verhauen';
