@@ -46,7 +46,7 @@ class Bot {
      */
     setupChannelJoinListener = () => {
         this.client.on('join', (channel) => {
-            console.log(`Joined Channel ${channel}`);
+            console.info(`Joined Channel ${channel}`);
         });
     };
 
@@ -63,7 +63,6 @@ class Bot {
      * Sets the settings for the Bot
      */
     createBot = (channels) => {
-        console.log(channels);
         this.client = new tmi.Client({
             options: { debug: false },
             connection: {
@@ -86,6 +85,9 @@ class Bot {
     setupWhisperListener = () => {
         this.client.on('whisper', (user, tags, message) => {
             if (message.toLowerCase() === 'join') {
+                //Dont let the Bot join a Channel twice!
+                if (this.channels.some((channel) => channel._id === user)) return;
+
                 this.client
                     .join(user)
                     .then(() => DB.createChannel(user))
@@ -93,10 +95,7 @@ class Bot {
                         channel.chatCommands = this.addCommandsToChannelAfterWhisper(user);
                         this.channels = [...this.channels, channel];
 
-                        //Whisper doesn´t work for now. Instead send a message to the Users channel.
-                        //this.client.whisper(user.substr(1), `Joined ${user}`);
-
-                        //TODO: Implement Message for the Users Channel
+                        this.client.say(user, 'Hey, It´s me!');
                     })
                     .catch((error) => console.error(error));
             } else if (message.toLowerCase().startsWith('steamid')) {
@@ -105,6 +104,9 @@ class Bot {
 
                 //Find the Channel for the user
                 const channel = this.findChannel(user);
+
+                //User, that doesnt has the Bot in his Channel => return
+                if (channel === undefined) return;
 
                 //Update the steamid on the Channel Entry
                 channel.steamId = steamid;
@@ -118,6 +120,9 @@ class Bot {
 
                 //Find the channel
                 const channel = this.findChannel(user);
+
+                //User, that doesnt has the Bot in his Channel => return
+                if (channel === undefined) return;
 
                 //Update the Channel and save
                 channel.keySign = keySign;

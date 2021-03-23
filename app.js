@@ -1,4 +1,4 @@
-import bot from './Bot';
+import Bot from './Bot';
 import mongoose from 'mongoose';
 
 mongoose
@@ -8,9 +8,10 @@ mongoose
         useFindAndModify: false,
     })
     .then(() => {
-        console.log('Connected to MongoDB Database');
-        bot.startUp();
+        console.info('Connected to MongoDB Database');
+        console.info('Starting Bot');
+        Bot.startUp();
     })
     .catch((error) => {
-        console.log('Error while connecting to DB: ' + error);
+        console.error('Error while connecting to DB: ' + error);
     });

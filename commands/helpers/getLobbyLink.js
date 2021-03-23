@@ -9,8 +9,10 @@ const steamApiUrl = 'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/
  */
 const getLobbyLink = async (config, options) => {
     if (!config.on) return false;
-    if (!options.steamId)
-        return 'Dude, ich weiß nicht wer du bist. Aber whisper mich mit deiner SteamId64 an TehePelo. Mit /w CyberPozob steamid STEAMID64. Und nicht vergessen dich frei zu machen... Also dein Profil öffentlich natürlich Kappa Und online stellen!';
+    if (!options.steamId) {
+        const botname = process.env.BOT_USERNAME;
+        return `Dude, ich weiß nicht wer du bist. Aber whisper mich mit deiner SteamId64 an TehePelo. Mit /w ${botname} steamid STEAMID64. Und nicht vergessen dich frei zu machen... Also dein Profil öffentlich natürlich Kappa Und online stellen!`;
+    }
 
     try {
         //Get the steam id
